@@ -2,7 +2,7 @@
 // pages/upload.js
 
 import React, { useState, useEffect } from "react";
-import Notification from "../components/notifcation";
+import Notification from "./components/notifcation";
 import { useAuthContext } from "@/context/authContext";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
@@ -88,7 +88,7 @@ function Page() {
 
         if (docSnap.exists()) {
           const userData = docSnap.data();
-          console.log({userData});
+          console.log({ userData });
           setUserToken(userData.linkedinToken || "");
           setYourLinkedInURN(userData.linkedinURN || "");
         } else {

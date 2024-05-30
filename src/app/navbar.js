@@ -2,15 +2,17 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuthContext } from "@/context/authContext";
+import { useRouter } from "next/navigation";
 
 function Navbar() {
   const { user, logout } = useAuthContext();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
+      router.push("/signin");
       await logout();
-
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -33,6 +35,8 @@ function Navbar() {
             <button
               onClick={toggleDropdown}
               className="text-gray-300 hover:text-white focus:outline-none"
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
             >
               Profile
             </button>

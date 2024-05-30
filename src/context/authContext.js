@@ -1,21 +1,18 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect, useContext, createContext } from "react";
 import { onAuthStateChanged, getAuth, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import firebase_app from "@/firebaseconfig";
 
 const auth = getAuth(firebase_app);
 
-export const AuthContext = React.createContext({});
-
-export const useAuthContext = () => React.useContext(AuthContext);
+const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  const [user, setUser] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -25,17 +22,14 @@ export const AuthContextProvider = ({ children }) => {
   }, []);
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      router.push("/signup"); // Redirect to the sign-in page after logout
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
+    await signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, logout }}>
-      {loading ? <div>Loading...</div> : children}
+    <AuthContext.Provider value={{ user, logout, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuthContext = () => useContext(AuthContext);
