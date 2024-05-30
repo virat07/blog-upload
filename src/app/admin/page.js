@@ -1,15 +1,15 @@
 "use client";
-import React, { useState } from "react";
+// pages/upload.js
+
+import React, { useState, useEffect } from "react";
+import Notification from "../components/notifcation";
 import { useAuthContext } from "@/context/authContext";
-import firebase_app, { firestore, firestore_db } from "@/firebaseconfig";
 import { useRouter } from "next/navigation";
-import axios from "axios";
-import { addDoc, collection } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { firestore_db } from "@/firebaseconfig";
 
 function Page() {
   const { user } = useAuthContext();
-  const userToken = `AQWYar4xgnwf8J2f9WHQsqP5aKSunG7MOuzF5dCQnsQegnIt5r-vW9JWiXWUDI8F4O9yYJFDVLPZMgRIsCivWOOaMhMylblq8KlxDgdt6jAGogMlcbJtugeWEH3Hvv5NpRnnUN0ZsJIP4SNTZzlwzRlZljrOt1XKy3GnQGqykMSoGj-OFueLZLGgua5FVRrorgFITmVm4CvJeVrRZbkS_kqq1Vz0Qu7Kx0X-Y1bald4CTXxyaHuE9jJIppL7VCegXmKc3jepiJasQYRpR8fd-AtNORUQqLWYPyjtqnWuvIh1phxzcYCVsRXzz6NXBsNMumwM5dybHjZiFVO2d0jL6A2QemqqyQ`;
-  const yourLinkedInURN = "PuS83scXBk";
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -19,6 +19,11 @@ function Page() {
     twitter: false,
     facebook: false,
   });
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
+  const [userToken, setUserToken] = useState("");
+  const [yourLinkedInURN, setYourLinkedInURN] = useState("");
+  const [loading, setLoading] = useState(true); // Initially loading state
 
   const handlePlatformToggle = (platform) => {
     setPlatforms({
@@ -34,10 +39,8 @@ function Page() {
         accessToken: userToken,
         title,
         content,
-        linkedInURN: yourLinkedInURN, // Corrected variable name
+        linkedInURN: yourLinkedInURN,
       };
-
-      alert("Post created successfully!");
 
       // Post to LinkedIn if selected
       if (platforms.linkedin) {
@@ -55,6 +58,10 @@ function Page() {
 
         const responseData = await response.json();
         console.log("LinkedIn API response:", responseData);
+
+        // Show success notification
+        setShowNotification(true);
+        setNotificationMessage("Post created successfully!");
       }
 
       // Clear form fields after submission
@@ -72,13 +79,43 @@ function Page() {
     }
   };
 
-  React.useEffect(() => {
-    if (user == null) router.push("/");
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        const db = firestore_db;
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          console.log({userData});
+          setUserToken(userData.linkedinToken || "");
+          setYourLinkedInURN(userData.linkedinURN || "");
+        } else {
+          console.log("No such document!");
+        }
+
+        setLoading(false); // Set loading to false after data retrieval
+      }
+    };
+
+    fetchUserData();
   }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/");
+    }
+  }, [user]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Placeholder for loading state
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className=" p-10 bg-white rounded-lg shadow-md">
+      {console.log(userToken, yourLinkedInURN)}
+      <div className="p-10 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-semibold mb-4 text-gray-800">
           Create a New Post
         </h1>
@@ -148,6 +185,7 @@ function Page() {
           </button>
         </form>
       </div>
+      {showNotification && <Notification message={notificationMessage} />}
     </div>
   );
 }
